@@ -41,6 +41,19 @@ namespace WpfApplication3 {
         }
 
 
+        public MenuControlButton HighlightedElement {
+            get { return (MenuControlButton)GetValue(HighlightedElementProperty); }
+            set { SetValue(HighlightedElementProperty, value); }
+        }
+
+
+        public static readonly DependencyProperty HighlightedElementProperty =
+            DependencyPropertyManager.Register("HighlightedElement", typeof(MenuControlButton), typeof(MenuControl), new FrameworkPropertyMetadata(null, new PropertyChangedCallback(OnHighlightedElementPropertyChanged)));
+
+        protected static void OnHighlightedElementPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            ((MenuControl)d).OnHighlightedElementChanged((MenuControlButton)e.OldValue);
+        }        
+
         public bool IsRootLevel {
             get { return (bool)GetValue(IsRootLevelProperty); }
             set { SetValue(IsRootLevelProperty, value); }
@@ -67,9 +80,15 @@ namespace WpfApplication3 {
             IsRootLevel = true;
         }
 
-        protected override void OnLostMouseCapture(MouseEventArgs e) {            
+        protected override void OnLostMouseCapture(MouseEventArgs e) {
+            base.OnLostMouseCapture(e);
         }
+        protected override void OnGotMouseCapture(MouseEventArgs e) {
+            base.OnGotMouseCapture(e);
+        }
+        protected virtual void OnHighlightedElementChanged(MenuControlButton oldValue) {
 
+        }
         public override void OnApplyTemplate() {
             base.OnApplyTemplate();
             PART_AppButton = (MenuControlButton)GetTemplateChild(MenuControlElements.PART_AppButton);
@@ -136,6 +155,7 @@ namespace WpfApplication3 {
             IsRootLevel = levels.Peek() == MainLevel;
             UpdateItemsPresenter();
             UpdateExpandedState();
+            UpdateMouseCapture();
         }
         void ClearLevel() {
             if (levels.Peek() == MainLevel)
@@ -251,6 +271,29 @@ namespace WpfApplication3 {
             get { return (bool)GetValue(IsSubMenuProperty); }
             set { SetValue(IsSubMenuProperty, value); }
         }
+
+
+        public bool IsHighlighted {
+            get { return (bool)GetValue(IsHighlightedProperty); }
+            set { SetValue(IsHighlightedProperty, value); }
+        }
+
+
+        public static readonly DependencyProperty IsHighlightedProperty =
+            DependencyPropertyManager.Register("IsHighlighted", typeof(bool), typeof(MenuControlButton), new FrameworkPropertyMetadata(false, new PropertyChangedCallback(OnIsHighlightedPropertyChanged)));
+        protected static void OnIsHighlightedPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            ((MenuControlButton)d).OnIsHighlightedChanged((bool)e.OldValue);
+        }
+
+
+        public MenuControlItemsControl Container {
+            get { return (MenuControlItemsControl)GetValue(ContainerProperty); }
+            set { SetValue(ContainerProperty, value); }
+        }
+        public static readonly DependencyProperty ContainerProperty =
+            DependencyPropertyManager.Register("Container", typeof(MenuControlItemsControl), typeof(MenuControlButton), new FrameworkPropertyMetadata(null));
+
+
         public static readonly DependencyProperty IsSubMenuProperty =
             DependencyPropertyManager.Register("IsSubMenu", typeof(bool), typeof(MenuControlButton), new FrameworkPropertyMetadata(false));
         public static readonly DependencyProperty OwnerProperty =
@@ -265,7 +308,24 @@ namespace WpfApplication3 {
         }
 
         protected virtual void OnOwnerChanged(MenuControlElement oldValue) {
-            IsSubMenu = Owner is MenuControlSubElement;
+            IsSubMenu = Owner is MenuControlSubElement;            
+        }
+        protected virtual void OnIsHighlightedChanged(bool oldValue) {
+            var mc = Container.With(x => x.Owner);
+            if (mc != null) {
+                mc.HighlightedElement = this;
+            }
+        }
+        protected override void OnMouseEnter(MouseEventArgs e) {
+            base.OnMouseEnter(e);
+            IsHighlighted = true;
+        }
+        protected override void OnMouseLeave(MouseEventArgs e) {
+            base.OnMouseLeave(e);
+            IsHighlighted = false;
+        }
+        public void DoClick() {
+            OnClick();
         }
     }
 
